@@ -10,27 +10,23 @@
     <style>
         :root {
             --bg-color: #1a1a1a;
-            --surface-color: #2c2c2c;
+            --surface-color: #242424;
             --primary-color: #bf9456;
             --text-color: #e0e0e0;
             --text-secondary-color: #a0a0a0;
             --highlight-color: #d4af37;
 
-            /* Truly Fluid Typography and Sizing using vmin (viewport's smallest dimension) */
-            --font-size-xs: clamp(0.6rem, 1.6vmin, 1rem);
-            --font-size-sm: clamp(0.7rem, 2.2vmin, 1.2rem);
-            --font-size-md: clamp(0.9rem, 3.2vmin, 1.8rem);
-            --font-size-lg: clamp(1.2rem, 5.5vmin, 3rem);
-            --font-size-xl: clamp(1.5rem, 6.5vmin, 3.5rem);
-            --font-size-xxl: clamp(2rem, 8vmin, 4.5rem);
+            /* Fluid Typography and Sizing using vmin (viewport's smallest dimension) */
+            --font-size-xs: clamp(0.7rem, 1.8vmin, 1rem);
+            --font-size-sm: clamp(0.8rem, 2.4vmin, 1.2rem);
+            --font-size-md: clamp(1rem, 3.5vmin, 1.8rem);
+            --font-size-lg: clamp(1.4rem, 6vmin, 3rem);
+            --font-size-xl: clamp(1.8rem, 7vmin, 3.5rem);
+            --font-size-xxl: clamp(4rem, 18vmin, 10rem); /* For the main clock */
         }
 
         /* --- Base & Layout --- */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Work Sans', sans-serif;
@@ -41,7 +37,7 @@
             display: flex;
             flex-direction: column;
             padding: 1.5vmin;
-            overflow: hidden; /* Absolutely prevent scrolling */
+            overflow: hidden;
         }
 
         .font-teko {
@@ -50,9 +46,7 @@
             letter-spacing: 1px;
         }
         
-        .header, .footer {
-            flex-shrink: 0;
-        }
+        .header, .footer { flex-shrink: 0; }
 
         .main-content {
             flex-grow: 1;
@@ -60,11 +54,12 @@
             gap: 1.5vmin;
             margin: 1.5vmin 0;
             min-height: 0;
-            /* MOBILE-FIRST: Default to a single column */
-            flex-direction: column;
+            /* LANDSCAPE-FIRST: Default to a two-column row layout */
+            flex-direction: row;
         }
 
-        .left-panel {
+        .left-panel { 
+            flex: 4; 
             display: flex;
             flex-direction: column;
             gap: 1.5vmin;
@@ -72,22 +67,18 @@
         }
         
         .right-panel {
+            flex: 5;
             background-color: var(--surface-color);
             border-radius: 1.5vmin;
             padding: 2.5vmin;
             display: flex;
             flex-direction: column;
             min-width: 0;
-            flex-grow: 1; /* Allow right panel to grow in column layout */
         }
         
-        /* WIDESCREEN: Switch to two columns on landscape screens */
-        @media (orientation: landscape) {
-            .main-content {
-                flex-direction: row;
-            }
-            .left-panel { flex: 4; }
-            .right-panel { flex: 5; }
+        /* On screens that are taller than they are wide, stack the main content */
+        @media (orientation: portrait) {
+            .main-content { flex-direction: column; }
         }
 
         /* --- Header Elements --- */
@@ -99,21 +90,36 @@
             background-color: var(--surface-color);
             border-radius: 1.5vmin;
         }
-        .logo img { height: 7vmin; }
+        .logo img { height: 8vmin; }
         .logo-recolor { filter: invert(75%) sepia(13%) saturate(1558%) hue-rotate(359deg) brightness(91%) contrast(88%); }
-        .date-time { text-align: right; }
-        .digital-clock { font-size: var(--font-size-xxl); line-height: 1; }
-        .date-display { font-size: var(--font-size-xs); }
 
-        /* --- Left Panel --- */
-        .clock-container {
+        #fullscreen-btn {
+            background: none; border: none; color: var(--text-secondary-color);
+            cursor: pointer; padding: 0.5rem; transition: color 0.2s;
+        }
+        #fullscreen-btn:hover { color: var(--primary-color); }
+        #fullscreen-btn svg { width: 3.5vmin; height: 3.5vmin; }
+        
+        /* Hide button when in fullscreen */
+        :fullscreen #fullscreen-btn { display: none; }
+        :-webkit-full-screen #fullscreen-btn { display: none; }
+        :-moz-full-screen #fullscreen-btn { display: none; }
+
+        /* --- Left Panel (Clock & Message) --- */
+        .clock-display {
             flex-grow: 1;
-            display: grid;
-            place-items: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
             background-color: var(--surface-color);
             border-radius: 1.5vmin;
             min-height: 0;
         }
+        .main-digital-clock { font-size: var(--font-size-xxl); line-height: 0.9; color: var(--text-color); }
+        .main-date-display { font-size: var(--font-size-sm); color: var(--text-secondary-color); }
+
         .message-box {
             text-align: center;
             background-color: var(--surface-color);
@@ -121,66 +127,34 @@
             border-radius: 1.5vmin;
             flex-shrink: 0;
         }
-        .quran-verse { font-size: var(--font-size-sm); color: var(--text-secondary-color); }
+        .quran-verse { font-size: var(--font-size-sm); font-style: italic; color: var(--text-secondary-color); }
         .quran-ref { font-size: var(--font-size-xs); color: var(--primary-color); margin-top: 0.5vmin; }
-
-        /* --- Analog Clock (Responsive) --- */
-        .analog-clock {
-            width: 75%;
-            max-width: 30vh; /* Prevent clock getting too big on tall screens */
-            position: relative;
-            background: radial-gradient(circle, #333 0%, var(--surface-color) 100%);
-            border: 0.7vmin solid var(--bg-color);
-            border-radius: 50%;
-            box-shadow: 0 0 3vmin rgba(0,0,0,0.7), inset 0 0 2vmin rgba(0,0,0,0.6);
-        }
-        .analog-clock::before {
-            content: ''; display: block; padding-top: 100%; /* Maintain 1:1 aspect ratio */
-        }
-        .clock-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .clock-hand {
-            position: absolute; bottom: 50%; left: 50%;
-            transform-origin: bottom; background-color: var(--text-color);
-            border-radius: 50px; transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.6, 1);
-        }
-        .hour-hand { width: 3.5%; height: 28%; }
-        .min-hand { width: 2.5%; height: 38%; }
-        .sec-hand { width: 1%; height: 42%; background-color: var(--primary-color); }
-        .clock-center {
-            width: 8%; height: 8%; background-color: var(--primary-color);
-            border: 0.7vmin solid var(--surface-color); border-radius: 50%;
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); z-index: 10;
-        }
         
         /* --- Right Panel --- */
         .prayer-list {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
+            flex-grow: 1; display: flex; flex-direction: column; justify-content: space-around;
         }
         .prayer-item {
             display: flex; justify-content: space-between; align-items: center;
             padding: 1.2vmin 2.5vmin; border-radius: 1vmin;
-            border: 2px solid transparent; transition: all 0.3s ease-in-out;
+            border-left: 5px solid transparent;
+            transition: all 0.3s ease-in-out;
         }
         .prayer-name { font-size: var(--font-size-lg); font-weight: 600; flex-basis: 40%; }
         .prayer-times { display: flex; justify-content: space-around; flex-basis: 60%; text-align: center; }
         .time-block-label { font-size: var(--font-size-sm); color: var(--text-secondary-color); }
         .time-block-time { font-size: var(--font-size-xl); line-height: 1.1; }
+        
         .prayer-item.active {
-            background-color: var(--primary-color); border-color: var(--highlight-color);
-            color: #000; transform: scale(1.02);
+            background: linear-gradient(90deg, rgba(191,148,86,0.15), transparent);
+            border-left-color: var(--highlight-color);
+            color: var(--text-color);
         }
-        .prayer-item.active .time-block-label, .prayer-item.active .jummah-second { color: rgba(0, 0, 0, 0.7); }
+        .prayer-item.active .time-block-time { color: var(--primary-color); font-weight: 600; }
 
         .info-cards-bottom { 
-            display: flex; 
-            gap: 1.5vmin; 
-            margin-top: auto; /* Pushes to the bottom */
-            padding-top: 1.5vmin; 
-            flex-shrink: 0;
+            display: flex; gap: 1.5vmin; margin-top: auto; 
+            padding-top: 1.5vmin; flex-shrink: 0;
         }
         .info-card {
             flex: 1; text-align: center; background-color: var(--bg-color);
@@ -215,24 +189,19 @@
         <div class="logo">
             <img src="https://www.wakefieldcentralmosque.co.uk/assets/img/img/logo-mosque.svg" alt="Wakefield Central Mosque Logo" class="logo-recolor">
         </div>
-        <div class="date-time">
-            <div id="digital-clock" class="digital-clock font-teko">--:--:--</div>
-            <div class="date-display">
-                <span id="gregorian-date">---</span> | <span id="hijri-date">---</span>
-            </div>
-        </div>
+        <button id="fullscreen-btn" title="Enter Fullscreen">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrows-fullscreen" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707m4.344 0a.5.5 0 0 1 .707 0l4.096 4.096V11.5a.5.5 0 1 1 1 0v3.975a.5.5 0 0 1-.5.5H11.5a.5.5 0 0 1 0-1h2.768l-4.096-4.096a.5.5 0 0 1 0-.707m0-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707m-4.344 0a.5.5 0 0 1-.707 0L1.025 1.732V4.5a.5.5 0 0 1-1 0V.525a.5.5 0 0 1 .5-.5H4.5a.5.5 0 0 1 0 1H1.732l4.096 4.096a.5.5 0 0 1 0 .707"/>
+            </svg>
+        </button>
     </header>
 
     <main class="main-content">
         <div class="left-panel">
-            <div class="clock-container">
-                <div class="analog-clock">
-                    <div class="clock-face">
-                        <div class="clock-hand hour-hand" id="hour-hand"></div>
-                        <div class="clock-hand min-hand" id="min-hand"></div>
-                        <div class="clock-hand sec-hand" id="sec-hand"></div>
-                        <div class="clock-center"></div>
-                    </div>
+            <div class="clock-display">
+                <div id="main-digital-clock" class="main-digital-clock font-teko">--:--:--</div>
+                <div class="main-date-display">
+                    <span id="gregorian-date">---</span> | <span id="hijri-date">---</span>
                 </div>
             </div>
             <div class="message-box">
@@ -271,7 +240,7 @@
     </div>
 
     <script type="module">
-        // --- Firebase Initialization (Consolidated for Reliability) ---
+        // --- Firebase Initialization ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -290,17 +259,15 @@
 
         // --- DOM Elements ---
         const elements = {
-            digitalClock: document.getElementById('digital-clock'),
+            mainDigitalClock: document.getElementById('main-digital-clock'),
             gregorianDate: document.getElementById('gregorian-date'),
             hijriDate: document.getElementById('hijri-date'),
-            hourHand: document.getElementById('hour-hand'),
-            minHand: document.getElementById('min-hand'),
-            secHand: document.getElementById('sec-hand'),
             prayerList: document.getElementById('prayer-list'),
             sunriseTime: document.getElementById('sunrise-time'),
             zawwalTime: document.getElementById('zawwal-time'),
             phoneOffOverlay: document.getElementById('phone-off-overlay'),
             overlayClock: document.getElementById('overlay-clock'),
+            fullscreenBtn: document.getElementById('fullscreen-btn'),
         };
 
         // --- State Variables ---
@@ -487,19 +454,26 @@
             elements.phoneOffOverlay.classList.toggle('visible', showOverlay);
         };
 
-        const updateClocks = () => {
+        const updateClock = () => {
             const now = new Date();
-            elements.digitalClock.textContent = now.toLocaleTimeString('en-GB');
-            elements.overlayClock.textContent = now.toLocaleTimeString('en-GB');
-            
-            const seconds = now.getSeconds();
-            const minutes = now.getMinutes();
-            const hours = now.getHours();
-            elements.secHand.style.transform = `translateX(-50%) rotate(${seconds * 6}deg)`;
-            elements.minHand.style.transform = `translateX(-50%) rotate(${minutes * 6 + seconds * 0.1}deg)`;
-            elements.hourHand.style.transform = `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)`;
+            const timeString = now.toLocaleTimeString('en-GB');
+            elements.mainDigitalClock.textContent = timeString;
+            elements.overlayClock.textContent = timeString;
         };
 
+        // --- Fullscreen Logic ---
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+        
         // --- Initialisation ---
         document.addEventListener('DOMContentLoaded', () => {
             elements.gregorianDate.textContent = new Date().toLocaleDateString('en-GB', {
@@ -509,8 +483,14 @@
             fetchHijriDate();
             setupPrayerTimeListeners();
             
+            elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
+            
+            // Initial clock update
+            updateClock();
+            highlightCurrentPrayer();
+
             setInterval(() => {
-                updateClocks();
+                updateClock();
                 highlightCurrentPrayer();
                 checkPhoneOffMessage();
             }, 1000);
