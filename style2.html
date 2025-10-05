@@ -316,7 +316,6 @@
             let txt = messageText.trim() || `"The mosques of Allah are only to be maintained by those who believe in Allah and the Last Day..." — Quran 9:18`;
             const { messageViewport, messageContent } = elements;
             
-            // Cleanup previous animation styles
             const oldScroller = messageViewport.querySelector('.message-scroller');
             if (oldScroller) {
                 messageViewport.innerHTML = '';
@@ -328,7 +327,7 @@
             requestAnimationFrame(() => {
                 const vpH = messageViewport.clientHeight, contentH = messageContent.scrollHeight;
                 if (contentH > vpH) {
-                    const duration = (contentH / vpH) * 15; // Adjust speed based on text length
+                    const duration = (contentH / vpH) * 15;
                     
                     const scroller = document.createElement('div');
                     scroller.className = 'message-scroller';
@@ -391,10 +390,12 @@
             setupListeners();
             elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
             
+            // Initial calls
             updateClock();
             highlightCurrentPrayer();
             renderMessage();
 
+            // Main 1-second interval loop
             setInterval(() => {
                 updateClock();
                 highlightCurrentPrayer();
@@ -410,3 +411,5 @@
     </script>
 </body>
 </html>
+
+
