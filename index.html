@@ -16,13 +16,13 @@
             --text-secondary-color: #a0a0a0;
             --highlight-color: #d4af37;
 
-            /* Fluid Typography and Sizing using vmin (viewport's smallest dimension) */
+            /* "Super Responsive" Fluid Sizing using vmin (viewport's smallest dimension) */
             --font-size-xs: clamp(0.7rem, 1.8vmin, 1rem);
             --font-size-sm: clamp(0.8rem, 2.4vmin, 1.2rem);
             --font-size-md: clamp(1rem, 3.5vmin, 1.8rem);
             --font-size-lg: clamp(1.4rem, 6vmin, 3rem);
             --font-size-xl: clamp(1.8rem, 7vmin, 3.5rem);
-            --font-size-xxl: clamp(4rem, 18vmin, 10rem); /* For the main clock */
+            --font-size-xxl: clamp(4rem, 18vmin, 10rem);
         }
 
         /* --- Base & Layout --- */
@@ -38,6 +38,8 @@
             flex-direction: column;
             padding: 1.5vmin;
             overflow: hidden;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
         }
 
         .font-teko {
@@ -58,22 +60,18 @@
             flex-direction: row;
         }
 
-        .left-panel { 
-            flex: 4; 
+        .left-panel, .right-panel {
             display: flex;
             flex-direction: column;
             gap: 1.5vmin;
             min-width: 0;
         }
-        
+        .left-panel { flex: 4; }
         .right-panel {
             flex: 5;
             background-color: var(--surface-color);
             border-radius: 1.5vmin;
             padding: 2.5vmin;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
         }
         
         /* On screens that are taller than they are wide, stack the main content */
@@ -148,7 +146,6 @@
         .prayer-item.active {
             background: linear-gradient(90deg, rgba(191,148,86,0.15), transparent);
             border-left-color: var(--highlight-color);
-            color: var(--text-color);
         }
         .prayer-item.active .time-block-time { color: var(--primary-color); font-weight: 600; }
 
@@ -485,7 +482,6 @@
             
             elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
             
-            // Initial clock update
             updateClock();
             highlightCurrentPrayer();
 
