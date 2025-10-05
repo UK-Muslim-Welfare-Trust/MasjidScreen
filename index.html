@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Masjid Display — Final</title>
+  <title>Masjid Display — Fixed Right Pane</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600&family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 
@@ -15,8 +15,7 @@
       --muted: #9aa0a6;
       --radius: 14px;
       --gap: 1.2vmin;
-      --global-scale: 1;
-      --clock-scale-large: 1.05;
+      --clock-scale-large: 1.0;
     }
 
     *{box-sizing:border-box;margin:0;padding:0}
@@ -41,7 +40,7 @@
       overflow:hidden;
     }
 
-    /* LEFT panel: explicit rows 20/40/10/20/10 */
+    /* LEFT panel layout fixed (20/40/10/20/10) */
     .left{
       display:grid;
       grid-template-rows: 20% 40% 10% 20% 10%;
@@ -93,7 +92,7 @@
     .gregorian{ font-size: clamp(1rem, 2.8vh, 3rem); color: #fff; }
     .hijri{ font-size: clamp(0.9rem, 2.2vh, 2.2rem); color: var(--gold); font-weight:600; }
 
-    .spacer-row { width:100%; } /* empty breathing space */
+    .spacer-row { width:100%; }
 
     .message-block{
       width:90%;
@@ -111,26 +110,25 @@
     .message-viewport{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
     .message-content{ color: var(--muted); font-size: clamp(0.9rem, 1.9vh, 1.4rem); line-height:1.35; padding:4px 6px; }
 
-    footer.left-foot{
-      color: var(--muted);
-      font-size: clamp(0.8rem, 1.6vh, 1.1rem);
-      width:100%;
-      text-align:center;
-    }
+    footer.left-foot{ color: var(--muted); font-size: clamp(0.8rem, 1.6vh, 1.1rem); width:100%; text-align:center; }
 
-    /* RIGHT panel */
-    .right{ display:flex; flex-direction:column; gap:1vmin; align-items:stretch; justify-content:space-between; }
+    /* RIGHT panel: redesigned grid that fills vertical space */
+    .right{
+      display:grid;
+      grid-template-rows: 1fr auto; /* prayer grid fills then info row at bottom */
+      gap: 1vmin;
+      min-height:0;
+    }
 
     .prayer-grid{
       display:grid;
-      gap: 1vmin;
-      width:100%;
-      align-content:start;
-      /* responsive columns */
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      /* keep grid area occupying most of right panel */
-      flex: 1 1 auto;
-      min-height: 0;
+      gap: 1vmin;
+      align-content: space-between; /* spread rows to fill the available height */
+      height:100%;
+      min-height:0;
+      align-items:stretch;
+      justify-items:stretch;
     }
 
     .prayer-card{
@@ -146,17 +144,11 @@
       overflow:visible;
     }
 
-    .prayer-left{
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:flex-start;
-      gap:6px;
-    }
+    .prayer-left{ display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
     .prayer-name{ font-family:'Teko',sans-serif; font-size: clamp(1.2rem, 2.8vh, 2.4rem); color: var(--gold); line-height:1; }
     .start-time{ color: var(--muted); font-size: clamp(0.8rem, 1.7vh, 1.2rem); }
 
-    .prayer-right{ text-align:right; }
+    .prayer-right{ text-align:right; display:flex; flex-direction:column; align-items:flex-end; }
     .jamaat-time{ color: var(--gold); font-weight:700; font-size: clamp(1.1rem, 2.6vh, 2.2rem); }
     .jummah-extra{ color: var(--muted); font-size: clamp(0.75rem, 1.6vh, 1rem); margin-top:0.4vmin; }
 
@@ -188,18 +180,16 @@
     @media (max-width: 920px){
       .wrap{ grid-template-columns: 1fr; grid-auto-rows: auto; }
       .left{ grid-template-rows: 18% 42% 8% 22% 10%; }
+      .prayer-grid{ grid-template-columns: 1fr; align-content: start; } /* single column on small screens but don't cram content */
       .clock-time{ font-size: clamp(2rem, 10vh, 8rem); }
-    }
-
-    @media (min-width: 2200px){
-      :root{ --global-scale: 1.08; --clock-scale-large: 1.12; }
+      .right{ grid-template-rows: auto auto; } /* make sure bottom info stays below */
     }
   </style>
 </head>
 <body>
   <div class="wrap" role="main" aria-label="Masjid display">
-    <section class="panel left" aria-label="Left panel logo clock message">
-      <div class="masjid-logo" id="logo-toggle" title="Toggle fullscreen (click)">
+    <section class="panel left" aria-label="Left panel">
+      <div class="masjid-logo" id="logo-toggle" title="Click to toggle fullscreen">
         <img src="https://www.wakefieldcentralmosque.co.uk/assets/img/img/logo-mosque.svg" alt="Masjid logo">
       </div>
 
@@ -219,12 +209,12 @@
         </div>
       </div>
 
-      <footer class="left-foot" aria-hidden="false">Please donate generously to support your Masjid.</footer>
+      <footer class="left-foot">Please donate generously to support your Masjid.</footer>
     </section>
 
     <section class="panel right" aria-label="Prayer timetable and info">
       <div id="prayer-grid" class="prayer-grid" role="list" aria-live="polite">
-        <!-- Prayer cards injected by JS -->
+        <!-- JS will inject prayer cards here -->
       </div>
 
       <div class="info-row" aria-hidden="false">
@@ -238,7 +228,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  // Firebase config (kept as requested)
+  // Firebase config (kept unchanged)
   const firebaseConfig = {
     apiKey: "AIzaSyDuq7jYQcKDKY3UWNxQwP51fKRwjCERuvo",
     authDomain: "wakefield-central-mosque.firebaseapp.com",
@@ -252,7 +242,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // DOM
+  // Elements
   const clockEl = document.getElementById('clock-time');
   const gregEl = document.getElementById('gregorian');
   const hijriEl = document.getElementById('hijri');
@@ -265,112 +255,98 @@
   const zawwalCard = document.getElementById('zawwal-card');
   const logoToggle = document.getElementById('logo-toggle');
 
-  // small hadith list (English only)
+  // Hadiths
   const HADITHS = [
     "The best of you are those who learn the Qur'an and teach it.",
     "The most beloved deed to Allah is that which is most consistent, even if it is little.",
     "Whoever builds a mosque for Allah, Allah will build for him a house in Paradise.",
     "Charity extinguishes sin as water extinguishes fire.",
-    "Prayer is the coolness of my eyes." 
+    "Prayer is the coolness of my eyes."
   ];
 
-  // state
-  let prayerCalendar = {}; // daily prayer times
-  let jamaatToday = {}; // jamaat times (prayerTimes/today)
-  let messageDoc = {}; // message
+  // State
+  let prayerCalendar = {};
+  let jamaatToday = {};
+  let messageDoc = {};
 
-  // helpers
+  // Helpers
   const pad = n => String(n).padStart(2,'0');
 
-  function t12FromHM(hm){
+  function format12(hm){
     if(!hm || typeof hm !== 'string') return '--:--';
-    const parts = hm.split(':');
-    if(parts.length < 2) return hm;
-    let hh = parseInt(parts[0],10);
-    const mm = parseInt(parts[1],10);
+    const [hhStr, mmStr] = hm.split(':');
+    if(!hhStr) return '--:--';
+    const hh = parseInt(hhStr, 10);
+    const mm = parseInt(mmStr || '0', 10);
+    if(isNaN(hh) || isNaN(mm)) return '--:--';
     const suffix = hh >= 12 ? 'PM' : 'AM';
-    hh = hh % 12 || 12;
-    return `${hh}:${pad(mm)} ${suffix}`;
+    const h12 = hh % 12 || 12;
+    return `${h12}:${pad(mm)} ${suffix}`;
   }
 
   function hmToMinutes(hm){
     if(!hm || typeof hm !== 'string') return null;
-    const p = hm.split(':');
-    if(p.length < 2) return null;
-    const hh = parseInt(p[0],10);
-    const mm = parseInt(p[1],10);
-    if(isNaN(hh) || isNaN(mm)) return null;
-    return hh*60 + mm;
+    const parts = hm.split(':').map(s => parseInt(s,10));
+    if(parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
+    return parts[0] * 60 + parts[1];
   }
 
   function minutesToHM(m){
-    if(m===null || typeof m !== 'number' || isNaN(m)) return null;
-    const hh = Math.floor(m/60) % 24;
+    if(m === null || isNaN(m)) return null;
+    const hh = Math.floor(m / 60) % 24;
     const mm = m % 60;
     return `${pad(hh)}:${pad(mm)}`;
   }
 
-  // clock (guaranteed)
+  // Clock + Hijri
   function updateClock(){
     const now = new Date();
-    // show 24-hour time for main clock (keeps consistent with prior design)
     clockEl.textContent = now.toLocaleTimeString('en-GB', { hour12: false });
     gregEl.textContent = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   }
 
-  // hijri via aladhan
   async function updateHijri(){
     try{
-      const d = new Date();
-      const day = String(d.getDate()).padStart(2,'0');
-      const month = String(d.getMonth()+1).padStart(2,'0');
-      const year = d.getFullYear();
-      const res = await fetch(`https://api.aladhan.com/v1/gToH?date=${day}-${month}-${year}`);
-      if(!res.ok) throw new Error('Hijri fail');
+      const now = new Date();
+      const d = String(now.getDate()).padStart(2,'0');
+      const m = String(now.getMonth()+1).padStart(2,'0');
+      const y = now.getFullYear();
+      const res = await fetch(`https://api.aladhan.com/v1/gToH?date=${d}-${m}-${y}`);
+      if(!res.ok) throw new Error('hijri fetch failed');
       const json = await res.json();
-      if(json?.data?.hijri){
-        hijriEl.textContent = `${json.data.hijri.day} ${json.data.hijri.month.en} ${json.data.hijri.year}H`;
-      } else {
-        hijriEl.textContent = '—';
-      }
+      if(json?.data?.hijri) hijriEl.textContent = `${json.data.hijri.day} ${json.data.hijri.month.en} ${json.data.hijri.year}H`;
+      else hijriEl.textContent = '—';
     }catch(e){
       hijriEl.textContent = '—';
     }
   }
 
-  // caching helpers
+  // LocalStorage caching
   function saveCache(){
     try{
       localStorage.setItem('masjid_prayerCalendar', JSON.stringify(prayerCalendar));
       localStorage.setItem('masjid_jamaatToday', JSON.stringify(jamaatToday));
       localStorage.setItem('masjid_message', JSON.stringify(messageDoc));
       localStorage.setItem('masjid_cache_ts', String(Date.now()));
-    }catch(e){
-      // ignore quota errors silently
-      console.warn('Cache save failed', e);
-    }
+    }catch(e){ console.warn('save cache failed', e); }
   }
 
   function loadCache(){
     try{
-      const c1 = localStorage.getItem('masjid_prayerCalendar');
-      const c2 = localStorage.getItem('masjid_jamaatToday');
-      const c3 = localStorage.getItem('masjid_message');
-      if(c1) prayerCalendar = JSON.parse(c1);
-      if(c2) jamaatToday = JSON.parse(c2);
-      if(c3) messageDoc = JSON.parse(c3);
-    }catch(e){
-      console.warn('Cache load failed', e);
-    }
+      const a = localStorage.getItem('masjid_prayerCalendar');
+      const b = localStorage.getItem('masjid_jamaatToday');
+      const c = localStorage.getItem('masjid_message');
+      if(a) prayerCalendar = JSON.parse(a);
+      if(b) jamaatToday = JSON.parse(b);
+      if(c) messageDoc = JSON.parse(c);
+    }catch(e){ console.warn('load cache failed', e); }
   }
 
-  // message selection: prefer messageDoc.text -> messageDoc.message -> cached -> hadith
+  // Message selection with hadith fallback
   function getDisplayMessage(){
-    const msg = (messageDoc && (messageDoc.text || messageDoc.message));
-    if(msg && String(msg).trim().length){
-      return String(msg).trim();
-    }
-    // fallback to cached message if present
+    const txt = messageDoc && (messageDoc.text || messageDoc.message);
+    if(txt && String(txt).trim()) return String(txt).trim();
+    // cached message
     try{
       const cached = localStorage.getItem('masjid_message');
       if(cached){
@@ -379,46 +355,44 @@
         if(m && String(m).trim()) return String(m).trim();
       }
     }catch(e){}
-    // last fallback: pick a hadith
-    const pick = HADITHS[Math.floor(Math.random() * HADITHS.length)];
-    return pick;
+    // hadith fallback
+    return HADITHS[Math.floor(Math.random() * HADITHS.length)];
   }
 
-  // render message centered; if taller than viewport, create vertical scroller
+  // Render message with vertical scroll if needed
   function renderMessage(){
     const txt = getDisplayMessage();
-    if(!messageViewport || !messageContent) return;
+    if(!messageViewport) return;
     messageViewport.innerHTML = '';
-    const wrapper = document.createElement('div');
-    wrapper.style.width = '100%';
-    wrapper.style.display = 'flex';
-    wrapper.style.justifyContent = 'center';
-    wrapper.style.alignItems = 'center';
-    wrapper.style.padding = '4px';
+    const wrap = document.createElement('div');
+    wrap.style.width = '100%';
+    wrap.style.display = 'flex';
+    wrap.style.alignItems = 'center';
+    wrap.style.justifyContent = 'center';
+    wrap.style.padding = '4px';
     const content = document.createElement('div');
     content.className = 'message-content';
     content.textContent = txt;
-    wrapper.appendChild(content);
-    messageViewport.appendChild(wrapper);
+    wrap.appendChild(content);
+    messageViewport.appendChild(wrap);
 
-    requestAnimationFrame(()=> {
+    requestAnimationFrame(() => {
       const vpH = messageViewport.clientHeight;
       const cH = content.scrollHeight;
       if(cH > vpH + 8){
-        // Build scroller with two copies and animate
         const scroller = document.createElement('div');
         scroller.style.width = '100%';
         scroller.style.display = 'block';
         scroller.style.whiteSpace = 'normal';
-        const copy1 = content.cloneNode(true);
-        const copy2 = content.cloneNode(true);
-        copy1.style.marginBottom = '16px';
-        copy2.style.marginBottom = '16px';
-        scroller.appendChild(copy1);
-        scroller.appendChild(copy2);
+        const c1 = content.cloneNode(true);
+        const c2 = content.cloneNode(true);
+        c1.style.marginBottom = '16px';
+        c2.style.marginBottom = '16px';
+        scroller.appendChild(c1);
+        scroller.appendChild(c2);
         messageViewport.innerHTML = '';
         messageViewport.appendChild(scroller);
-        const base = 22; // seconds base
+        const base = 22;
         const ratio = Math.max(cH / vpH, 1);
         const duration = Math.min(Math.max(base * ratio, 16), 120);
         const fname = 'msgScroll' + Math.floor(Math.random()*100000);
@@ -427,51 +401,55 @@
         style.textContent = `@keyframes ${fname}{0%{transform:translateY(0)}6%{transform:translateY(0)}94%{transform:translateY(-${cH}px)}100%{transform:translateY(-${cH}px)}}`;
         document.head.appendChild(style);
         scroller.style.animation = `${fname} ${duration}s linear infinite`;
-      } else {
-        // ensure centered
-        wrapper.style.justifyContent = 'center';
       }
     });
   }
 
-  // Render prayer grid
+  // Render right pane prayer grid
   function renderPrayerGrid(){
     grid.innerHTML = '';
     const order = ['Fajr','Zuhr','Asr','Maghrib','Isha','Jummah'];
-    order.forEach(name => {
+
+    order.forEach((name) => {
       const card = document.createElement('div');
       card.className = 'prayer-card';
+
       const left = document.createElement('div');
       left.className = 'prayer-left';
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'prayer-name';
+      nameDiv.textContent = name;
+      left.appendChild(nameDiv);
+
+      // only show start if NOT jummah
+      if(name !== 'Jummah'){
+        const startDiv = document.createElement('div');
+        startDiv.className = 'start-time';
+        const startHM = prayerCalendar[name] || '--:--';
+        startDiv.textContent = 'Start: ' + format12(startHM);
+        left.appendChild(startDiv);
+      }
+
       const right = document.createElement('div');
       right.className = 'prayer-right';
-
-      const prayerLabel = document.createElement('div');
-      prayerLabel.className = 'prayer-name';
-      prayerLabel.textContent = name;
-
-      const startLabel = document.createElement('div');
-      startLabel.className = 'start-time';
-      // for jummah start we display Zuhr's start to match previous logic
-      const startKey = (name === 'Jummah') ? 'Zuhr' : name;
-      startLabel.textContent = 'Start: ' + t12FromHM(prayerCalendar[startKey]);
-
-      left.appendChild(prayerLabel);
-      left.appendChild(startLabel);
-
-      const jamaDiv = document.createElement('div');
-      jamaDiv.className = 'jamaat-time';
-      // jamaat times from jamaatToday
-      jamaDiv.textContent = t12FromHM(jamaatToday[name]);
-
-      right.appendChild(jamaDiv);
-
-      // jummah second line small
+      // Jamaat times: from jamaatToday; for Jummah, use fields Jumma and Jumma2
       if(name === 'Jummah'){
-        const secondLine = document.createElement('div');
-        secondLine.className = 'jummah-extra';
-        secondLine.textContent = '2nd Jama’at at ' + t12FromHM(jamaatToday.Jumma2);
-        right.appendChild(secondLine);
+        const j1 = format12(jamaatToday.Jumma);
+        const j2 = format12(jamaatToday.Jumma2);
+        const j1div = document.createElement('div');
+        j1div.className = 'jamaat-time';
+        j1div.textContent = j1;
+        right.appendChild(j1div);
+        const j2div = document.createElement('div');
+        j2div.className = 'jummah-extra';
+        j2div.textContent = '2nd Jama’at at ' + j2;
+        right.appendChild(j2div);
+      } else {
+        const jama = format12(jamaatToday[name]);
+        const jamaDiv = document.createElement('div');
+        jamaDiv.className = 'jamaat-time';
+        jamaDiv.textContent = jama;
+        right.appendChild(jamaDiv);
       }
 
       card.appendChild(left);
@@ -479,79 +457,76 @@
       grid.appendChild(card);
     });
 
-    // update info row times
-    sunriseTimeEl.textContent = t12FromHM(prayerCalendar.Sunrise);
-    // calculate Zawwal as Zuhr - 10 mins (if Zuhr exists)
-    const zuhrH = prayerCalendar.Zuhr;
-    const zuhrMin = hmToMinutes(zuhrH);
-    const zawwalHM = (zuhrMin !== null) ? minutesToHM(zuhrMin - 10) : null;
-    zawwalTimeEl.textContent = t12FromHM(zawwalHM);
+    // set sunrise and zawwal
+    sunriseTimeEl.textContent = format12(prayerCalendar.Sunrise);
+    const zMin = (() => {
+      const z = prayerCalendar.Zuhr;
+      const zM = hmToMinutes(z);
+      return (zM === null) ? null : minutesToHM(zM - 10);
+    })();
+    zawwalTimeEl.textContent = format12(zMin);
 
-    // apply active highlights
-    highlightActive();
+    highlightActive(); // apply highlights after render
   }
 
-  // highlight active prayer & info cards (breathing glow)
+  // Highlight active card and info cards
   function highlightActive(){
-    // clear existing
     document.querySelectorAll('.prayer-card').forEach(c => c.classList.remove('active'));
     sunriseCard.classList.remove('active');
     zawwalCard.classList.remove('active');
 
-    // determine current time in minutes
     const now = new Date();
     const nowMin = now.getHours()*60 + now.getMinutes();
 
-    // prayer times array -> start minutes
+    // build ordered times (exclude jummah from this calculation)
     const order = ['Fajr','Zuhr','Asr','Maghrib','Isha'];
     const times = order.map(p => ({ name: p, start: hmToMinutes(prayerCalendar[p]) }))
       .filter(x => x.start !== null)
       .sort((a,b) => a.start - b.start);
 
-    // determine current prayer (wrap-around)
-    let currentName = null;
+    let current = null;
     if(times.length){
       if(nowMin >= times[times.length-1].start || nowMin < times[0].start){
-        currentName = times[times.length-1].name;
+        current = times[times.length-1].name;
       } else {
         for(let i=0;i<times.length-1;i++){
           if(nowMin >= times[i].start && nowMin < times[i+1].start){
-            currentName = times[i].name; break;
+            current = times[i].name; break;
           }
         }
       }
     }
-    if(currentName){
-      const el = document.querySelector(`#prayer-grid .prayer-card:nth-child(${( ['Fajr','Zuhr','Asr','Maghrib','Isha','Jummah'].indexOf(currentName) ) + 1})`);
-      if(el) el.classList.add('active');
+
+    if(current){
+      // find the card whose .prayer-name text equals current
+      const cards = Array.from(document.querySelectorAll('.prayer-card'));
+      for(const c of cards){
+        const pname = c.querySelector('.prayer-name')?.textContent?.trim();
+        if(pname === current){ c.classList.add('active'); break; }
+      }
     }
 
-    // highlight Sunrise window: for 15 minutes after sunrise
-    const sunriseMin = hmToMinutes(prayerCalendar.Sunrise);
-    if(sunriseMin !== null && nowMin >= sunriseMin && nowMin < sunriseMin + 15){
+    // sunrise highlight: +15 minutes after sunrise
+    const sMin = hmToMinutes(prayerCalendar.Sunrise);
+    if(sMin !== null && nowMin >= sMin && nowMin < sMin + 15){
       sunriseCard.classList.add('active');
     }
 
-    // highlight Zawwal: for 10 minutes before Zuhr start
-    const zuhrMin2 = hmToMinutes(prayerCalendar.Zuhr);
-    if(zuhrMin2 !== null && nowMin >= zuhrMin2 - 10 && nowMin < zuhrMin2){
+    // zawwal highlight: 10 minutes before Zuhr
+    const zuhrMin = hmToMinutes(prayerCalendar.Zuhr);
+    if(zuhrMin !== null && nowMin >= zuhrMin - 10 && nowMin < zuhrMin){
       zawwalCard.classList.add('active');
     }
   }
 
-  // On first load: try cached data
+  // Load cache if present initially
   loadCache();
-  if(Object.keys(prayerCalendar).length) {
-    renderPrayerGrid();
-    renderMessage();
-  } else {
-    // initial placeholders until firebase arrives
-    messageContent.textContent = 'Loading…';
-  }
+  if(Object.keys(prayerCalendar).length) renderPrayerGrid();
+  if(Object.keys(messageDoc).length) renderMessage();
 
-  // Setup Firestore listeners (keeps existing paths)
+  // Firestore listeners
   const base = 'artifacts/masjid-connect-app/public/data';
-  // prayerTimes/today (jamaat)
+
   try{
     onSnapshot(doc(db, `${base}/prayerTimes/today`), snap => {
       if(snap.exists()){
@@ -560,26 +535,20 @@
         renderPrayerGrid();
       }
     });
-  }catch(e){ console.warn('jamaat listener failed', e); }
+  }catch(e){ console.warn('jamaat snapshot failed', e); }
 
-  // prayerCalendar/DD-MM
-  function todayDocId(){
-    const d = new Date();
-    const dd = String(d.getDate()).padStart(2,'0');
-    const mm = String(d.getMonth()+1).padStart(2,'0');
-    return `${dd}-${mm}`;
-  }
+  function todayId(){ const d=new Date(); return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+
   try{
-    onSnapshot(doc(db, `${base}/prayerCalendar/${todayDocId()}`), snap => {
+    onSnapshot(doc(db, `${base}/prayerCalendar/${todayId()}`), snap => {
       if(snap.exists()){
         prayerCalendar = snap.data() || {};
         saveCache();
         renderPrayerGrid();
       }
     });
-  }catch(e){ console.warn('calendar listener failed', e); }
+  }catch(e){ console.warn('calendar snapshot failed', e); }
 
-  // message -> path: artifacts/.../message/message
   try{
     onSnapshot(doc(db, `${base}/message/message`), snap => {
       if(snap.exists()){
@@ -587,61 +556,54 @@
         saveCache();
         renderMessage();
       } else {
-        // clear to fallback onto hadith or cached
         messageDoc = {};
         renderMessage();
       }
     });
-  }catch(e){ console.warn('message listener failed', e); }
+  }catch(e){ console.warn('message snapshot failed', e); }
 
-  // Offline fallback: if after 2s no firebase filled data, load cache and render
+  // fallback to cached data if Firebase slow
   setTimeout(()=> {
-    const havePrayer = Object.keys(prayerCalendar).length;
-    const haveJamaat = Object.keys(jamaatToday).length;
-    if(!havePrayer || !haveJamaat){
-      loadCache(); // attempt load again
+    if(!Object.keys(prayerCalendar).length || !Object.keys(jamaatToday).length){
+      loadCache();
       renderPrayerGrid();
       renderMessage();
     }
   }, 2000);
 
-  // Clock + Hijri startup
+  // startup clock/hijri/highlight
   window.addEventListener('load', ()=> {
     updateClock();
     setInterval(updateClock, 1000);
-    // hijri fetch
     updateHijri();
-    // refresh hijri once per hour
-    setInterval(updateHijri, 1000 * 60 * 60);
-    // highlight interval
+    setInterval(updateHijri, 1000*60*60);
     setInterval(()=>{ highlightActive(); }, 1000);
-    // re-render message on resize
-    let rt; window.addEventListener('resize', ()=>{ clearTimeout(rt); rt = setTimeout(renderMessage, 250); });
+
+    let rt;
+    window.addEventListener('resize', ()=>{ clearTimeout(rt); rt = setTimeout(()=>{ renderMessage(); computeFix(); }, 250); });
+    setTimeout(()=>{ computeFix(); }, 300);
   });
 
-  // Fullscreen toggle via logo
+  // logo fullscreen toggle
   logoToggle.addEventListener('click', () => {
     if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
     else document.exitFullscreen().catch(()=>{});
   });
 
-  // ensure the grid occupies right panel height: small safeguard to recalc scale if overflow
-  function computeScaleAndFix(){
-    // shrink clock scale slightly if total vertical overflow occurs on small devices
+  // small compute fix to adjust if right column still cramped
+  function computeFix(){
     const wrap = document.querySelector('.wrap');
     if(!wrap) return;
     const rect = wrap.getBoundingClientRect();
     const avail = window.innerHeight - (parseInt(getComputedStyle(document.body).paddingTop)||0) - (parseInt(getComputedStyle(document.body).paddingBottom)||0);
     if(rect.height > avail - 6){
-      document.documentElement.style.setProperty('--clock-scale-large', '0.95');
-      document.documentElement.style.setProperty('--global-scale', '0.88');
+      document.documentElement.style.setProperty('--clock-scale-large','0.94');
     } else {
-      document.documentElement.style.setProperty('--clock-scale-large', '1.0');
-      document.documentElement.style.setProperty('--global-scale', '1.0');
+      document.documentElement.style.setProperty('--clock-scale-large','1.0');
     }
+    // ensure grid fills vertical space by forcing a small repaint
+    requestAnimationFrame(()=>{ document.getElementById('prayer-grid')?.offsetHeight; });
   }
-  window.addEventListener('resize', () => { computeScaleAndFix(); setTimeout(computeScaleAndFix, 220); });
-  setTimeout(computeScaleAndFix, 300);
 </script>
 </body>
 </html>
