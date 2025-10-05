@@ -539,14 +539,6 @@
     }
   }
 
-  // Utility: hmToMinutes safe
-  function hmToMinutes(hm){
-    if(!hm || typeof hm !== 'string') return null;
-    const p = hm.split(':').map(s => parseInt(s,10));
-    if(p.length < 2 || isNaN(p[0]) || isNaN(p[1])) return null;
-    return p[0]*60 + p[1];
-  }
-
   // On first load: try cached data
   loadCache();
   if(Object.keys(prayerCalendar).length) {
