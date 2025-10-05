@@ -104,14 +104,13 @@
         .main-digital-clock { font-size: var(--font-size-xxl); line-height: 0.9; }
         .main-date-display { font-size: var(--font-size-sm); color: var(--text-secondary-color); }
 
-        /* --- NEW Message Box with Autoscroll --- */
         .message-box {
             background-color: var(--surface-color);
             padding: 2vmin;
             border-radius: 1.5vmin;
             flex-shrink: 0;
-            min-height: 10vmin; /* Ensure it has some height */
-            overflow: hidden; /* This is the viewport */
+            min-height: 10vmin;
+            overflow: hidden;
         }
         .message-content {
             font-size: var(--font-size-sm);
@@ -288,8 +287,14 @@
 
             onSnapshot(doc(db, `${path}/prayerTimes/today`), snap => { if(snap.exists()) { jamaatTimesData = snap.data(); renderUI(); } });
             onSnapshot(doc(db, `${path}/prayerCalendar/${calendarId}`), snap => { if(snap.exists()) { prayerTimesData = snap.data(); renderUI(); } });
-            onSnapshot(doc(db, `${path}/message`), snap => {
-                messageText = (snap.exists() && snap.data().text) ? snap.data().text : '';
+            
+            // --- CORRECTED PATH AND FAIL-SAFE ---
+            onSnapshot(doc(db, `${path}/message/message`), snap => {
+                if (snap.exists() && typeof snap.data().text === 'string' && snap.data().text.trim() !== '') {
+                    messageText = snap.data().text;
+                } else {
+                    messageText = `"The mosques of Allah are only to be maintained by those who believe in Allah and the Last Day..." — Quran 9:18`;
+                }
                 renderMessage();
             });
         }
@@ -313,9 +318,9 @@
         }
         
         function renderMessage() {
-            let txt = messageText.trim() || `"The mosques of Allah are only to be maintained by those who believe in Allah and the Last Day..." — Quran 9:18`;
             const { messageViewport, messageContent } = elements;
-            
+            let txt = messageText;
+
             const oldScroller = messageViewport.querySelector('.message-scroller');
             if (oldScroller) {
                 messageViewport.innerHTML = '';
@@ -325,6 +330,7 @@
             messageContent.textContent = txt;
 
             requestAnimationFrame(() => {
+                if (!messageViewport || !messageContent) return;
                 const vpH = messageViewport.clientHeight, contentH = messageContent.scrollHeight;
                 if (contentH > vpH) {
                     const duration = (contentH / vpH) * 15;
@@ -390,12 +396,9 @@
             setupListeners();
             elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
             
-            // Initial calls
             updateClock();
             highlightCurrentPrayer();
-            renderMessage();
-
-            // Main 1-second interval loop
+            
             setInterval(() => {
                 updateClock();
                 highlightCurrentPrayer();
