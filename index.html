@@ -15,6 +15,7 @@
       --text-color: #e0e0e0;
       --text-secondary-color: #a0a0a0;
       --highlight-color: #d4af37;
+      --makrooh-color: rgba(176, 26, 26, 0.7);
       --gap: 1.2vmin;
       --radius: 14px;
     }
@@ -254,15 +255,34 @@
       100% { box-shadow: 0 4px 15px rgba(212, 175, 55, 0.05); }
     }
     
-    .phone-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex;
-      align-items: center; justify-content: center; flex-direction: column;
-      z-index: 9999; gap: 18px; color: #fff; text-align: center;
+    .phone-overlay, .makrooh-overlay {
+      position: fixed; inset: 0; 
+      display: flex; align-items: center; justify-content: center;
       visibility: hidden; opacity: 0; transition: opacity .35s ease, visibility .35s;
     }
-    .phone-overlay.visible { visibility: visible; opacity: 1; }
+    .phone-overlay.visible, .makrooh-overlay.visible { visibility: visible; opacity: 1; }
+
+    .phone-overlay {
+      background: rgba(0,0,0,0.9); flex-direction: column;
+      z-index: 10000; gap: 18px; color: #fff; text-align: center;
+    }
     .phone-overlay .text { font-family: 'Teko', sans-serif; font-size: clamp(1.2rem, 5vmin, 3rem); }
     .phone-overlay .smalltime { font-size: clamp(1rem, 3vmin, 2rem); color: var(--text-secondary-color); }
+
+    .makrooh-overlay {
+      background: radial-gradient(circle, rgba(176, 26, 26, 0.2) 0%, rgba(176, 26, 26, 0) 70%);
+      z-index: 9000;
+      pointer-events: none;
+    }
+    .makrooh-text {
+      font-family: 'Teko', sans-serif;
+      font-size: clamp(1.5rem, 6vmin, 3.5rem);
+      color: #f8d7da;
+      background: rgba(0,0,0,0.4);
+      padding: 1vmin 3vmin;
+      border-radius: var(--radius);
+      text-shadow: 0 2px 10px black;
+    }
 
     @media (max-width: 920px), (orientation: portrait) {
       .wrap { grid-template-columns: 1fr; grid-auto-rows: auto 1fr; }
@@ -312,6 +332,10 @@
     <div class="text">Please Silence Your Phone</div>
     <div id="overlay-clock" class="smalltime">--:--:--</div>
   </div>
+  
+  <div id="makrooh-overlay" class="makrooh-overlay" aria-hidden="true">
+      <div class="makrooh-text">Makrooh Time <br><small>(Prayer not permitted)</small></div>
+  </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -345,6 +369,7 @@
     logo: document.getElementById('logo-toggle'),
     phoneOverlay: document.getElementById('phone-overlay'),
     overlayClock: document.getElementById('overlay-clock'),
+    makroohOverlay: document.getElementById('makrooh-overlay'),
   };
 
   const HADITHS = [
@@ -392,8 +417,13 @@
 
   function updateClock() {
     const now = new Date();
-    ELS.clock.textContent = now.toLocaleTimeString('en-GB');
-    ELS.overlayClock.textContent = now.toLocaleTimeString('en-GB');
+    let h = now.getHours();
+    const m = pad(now.getMinutes());
+    const s = pad(now.getSeconds());
+    const h12 = h % 12 || 12; // Convert 24hr to 12hr format
+    const timeString = `${h12}:${m}:${s}`;
+    ELS.clock.textContent = timeString;
+    ELS.overlayClock.textContent = timeString;
   }
 
   async function fetchHijriDate() {
@@ -482,6 +512,7 @@
     const ishaStart = hmToMinutes(prayerCalendar.Isha);
 
     let activePrayer = '';
+    let isMakrooh = false;
 
     if (nowMin >= ishaStart || nowMin < fajrStart) {
         activePrayer = 'Isha';
@@ -497,9 +528,11 @@
 
     if (activePrayer) document.getElementById(`item-${activePrayer.toLowerCase()}`)?.classList.add('active');
     
-    if (sunrise !== null && nowMin >= sunrise && nowMin < sunrise + 15) ELS.sunriseCard.classList.add('active');
-    if (zuhrStart !== null && nowMin >= zuhrStart - 15 && nowMin < zuhrStart) ELS.zawwalCard.classList.add('active');
-    if (maghribStart !== null && nowMin >= maghribStart - 15 && nowMin < maghribStart) ELS.sunsetCard.classList.add('active');
+    if (sunrise !== null && nowMin >= sunrise && nowMin < sunrise + 15) { ELS.sunriseCard.classList.add('active'); isMakrooh = true; }
+    if (zuhrStart !== null && nowMin >= zuhrStart - 15 && nowMin < zuhrStart) { ELS.zawwalCard.classList.add('active'); isMakrooh = true; }
+    if (maghribStart !== null && nowMin >= maghribStart - 15 && nowMin < maghribStart) { ELS.sunsetCard.classList.add('active'); isMakrooh = true; }
+    
+    ELS.makroohOverlay.classList.toggle('visible', isMakrooh);
   }
 
   function checkPhoneOverlay() {
