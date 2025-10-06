@@ -204,14 +204,20 @@
       line-height: 1.1;
       font-weight: 600;
     }
+    
+    /* --- NEW: Style for smaller start time --- */
+    .time-block.start-time .time-block-time {
+      font-size: clamp(1.4rem, 5.5vmin, 2.8rem);
+      color: var(--text-secondary-color);
+      font-weight: 500;
+    }
 
     .prayer-item.active {
       background: linear-gradient(90deg, rgba(191,148,86,0.15), transparent);
       border-left-color: var(--highlight-color);
     }
-
     .prayer-item.active .prayer-name,
-    .prayer-item.active .time-block-time {
+    .prayer-item.active .jamaat-time .time-block-time {
       color: var(--primary-color);
     }
     
@@ -348,6 +354,7 @@
   ];
 
   let prayerCalendar = {}, jamaatToday = {}, messageText = '';
+  let wakeLock = null; // For Screen Wake Lock API
 
   const pad = n => String(n).padStart(2,'0');
   const format12 = hm => {
@@ -441,11 +448,11 @@
       const id = `item-${name.toLowerCase()}`;
       if (name === 'Jummah') {
         const j1 = format12(jamaatToday.Jumma), j2 = format12(jamaatToday.Jumma2);
-        return `<div class="prayer-item" id="${id}"><div class="prayer-name">${name}</div><div class="prayer-times"><div class="time-block"><div class="time-block-label">1st Jama'at</div><div class="time-block-time">${j1}</div></div><div class="time-block"><div class="time-block-label">2nd Jama'at</div><div class="time-block-time">${j2}</div></div></div></div>`;
+        return `<div class="prayer-item" id="${id}"><div class="prayer-name">${name}</div><div class="prayer-times"><div class="time-block jamaat-time"><div class="time-block-label">1st Jama'at</div><div class="time-block-time">${j1}</div></div><div class="time-block jamaat-time"><div class="time-block-label">2nd Jama'at</div><div class="time-block-time">${j2}</div></div></div></div>`;
       } else {
         const start = format12(prayerCalendar[name]);
         const jamaat = name === 'Maghrib' ? start : format12(jamaatToday[name]);
-        return `<div class="prayer-item" id="${id}"><div class="prayer-name">${name}</div><div class="prayer-times"><div class="time-block"><div class="time-block-label">Start</div><div class="time-block-time">${start}</div></div><div class="time-block"><div class="time-block-label">Jama'at</div><div class="time-block-time">${jamaat}</div></div></div></div>`;
+        return `<div class="prayer-item" id="${id}"><div class="prayer-name">${name}</div><div class="prayer-times"><div class="time-block start-time"><div class="time-block-label">Start</div><div class="time-block-time">${start}</div></div><div class="time-block jamaat-time"><div class="time-block-label">Jama'at</div><div class="time-block-time">${jamaat}</div></div></div></div>`;
       }
     }).join('');
     ELS.sunriseTime.textContent = format12(prayerCalendar.Sunrise);
@@ -483,9 +490,33 @@
     ELS.phoneOverlay.classList.toggle('visible', show);
   }
 
+  async function toggleWakeLock(enable) {
+    if (enable) {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => {
+            console.log('Screen Wake Lock was released');
+          });
+          console.log('Screen Wake Lock is active.');
+        }
+      } catch (err) {
+        console.error(`${err.name}, ${err.message}`);
+      }
+    } else {
+      if (wakeLock !== null) {
+        await wakeLock.release();
+        wakeLock = null;
+      }
+    }
+  }
+
   function toggleFullscreen() {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => console.warn(e));
-    else if (document.exitFullscreen) document.exitFullscreen();
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(e => console.warn(e));
+    } else if (document.exitFullscreen) {
+        document.exitFullscreen();
+    }
   }
   
   document.addEventListener('DOMContentLoaded', () => {
@@ -495,6 +526,7 @@
     fetchHijriDate();
     setupListeners();
     ELS.logo.addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', () => toggleWakeLock(!!document.fullscreenElement));
 
     updateClock();
     highlightActive();
