@@ -205,7 +205,6 @@
       font-weight: 600;
     }
     
-    /* --- NEW: Style for smaller start time --- */
     .time-block.start-time .time-block-time {
       font-size: clamp(1.4rem, 5.5vmin, 2.8rem);
       color: var(--text-secondary-color);
@@ -354,7 +353,7 @@
   ];
 
   let prayerCalendar = {}, jamaatToday = {}, messageText = '';
-  let wakeLock = null; // For Screen Wake Lock API
+  let wakeLock = null;
 
   const pad = n => String(n).padStart(2,'0');
   const format12 = hm => {
@@ -464,21 +463,34 @@
     document.querySelectorAll('.prayer-item.active, .info-mini.active').forEach(el => el.classList.remove('active'));
     if (Object.keys(prayerCalendar).length === 0) return;
     const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes(), isFriday = now.getDay() === 5;
-    const order = isFriday ? ['Fajr', 'Jummah', 'Asr', 'Maghrib', 'Isha'] : ['Fajr', 'Zuhr', 'Asr', 'Maghrib', 'Isha'];
-    const times = order.map(p => ({ name: p, start: hmToMinutes(prayerCalendar[p === 'Jummah' ? 'Zuhr' : p]) }))
-        .filter(t => t.start !== null).sort((a,b) => a.start - b.start);
-    let currentPrayer = '';
-    if (times.length) {
-        if (nowMin >= times[times.length - 1].start || nowMin < times[0].start) currentPrayer = times[times.length - 1].name;
-        else for(let i = 0; i < times.length - 1; i++) if (nowMin >= times[i].start && nowMin < times[i+1].start) { currentPrayer = times[i].name; break; }
-    }
-    if (currentPrayer) document.getElementById(`item-${currentPrayer.toLowerCase()}`)?.classList.add('active');
     
-    const sMin = hmToMinutes(prayerCalendar.Sunrise);
-    if (sMin !== null && nowMin >= sMin && nowMin < sMin + 15) ELS.sunriseCard.classList.add('active');
+    const fajrStart = hmToMinutes(prayerCalendar.Fajr);
+    const sunrise = hmToMinutes(prayerCalendar.Sunrise);
+    const zuhrStart = hmToMinutes(prayerCalendar.Zuhr);
+    const asrStart = hmToMinutes(prayerCalendar.Asr);
+    const maghribStart = hmToMinutes(prayerCalendar.Maghrib);
+    const ishaStart = hmToMinutes(prayerCalendar.Isha);
 
-    const zMin = hmToMinutes(prayerCalendar.Zuhr);
-    if (zMin !== null && nowMin >= zMin - 10 && nowMin < zMin) ELS.zawwalCard.classList.add('active');
+    let activePrayer = '';
+
+    if (fajrStart !== null && (nowMin >= ishaStart || nowMin < fajrStart)) {
+      activePrayer = 'Isha';
+    } else if (maghribStart !== null && ishaStart !== null && nowMin >= maghribStart && nowMin < ishaStart - 1) {
+      activePrayer = 'Maghrib';
+    } else if (asrStart !== null && maghribStart !== null && nowMin >= asrStart && nowMin < maghribStart - 15) {
+      activePrayer = 'Asr';
+    } else if (zuhrStart !== null && asrStart !== null && nowMin >= zuhrStart && nowMin < asrStart - 1) {
+      activePrayer = isFriday ? 'Jummah' : 'Zuhr';
+    } else if (fajrStart !== null && sunrise !== null && nowMin >= fajrStart && nowMin < sunrise) {
+      activePrayer = 'Fajr';
+    }
+
+    if (activePrayer) {
+        document.getElementById(`item-${activePrayer.toLowerCase()}`)?.classList.add('active');
+    }
+    
+    if (sunrise !== null && nowMin >= sunrise && nowMin < sunrise + 15) ELS.sunriseCard.classList.add('active');
+    if (zuhrStart !== null && nowMin >= zuhrStart - 10 && nowMin < zuhrStart) ELS.zawwalCard.classList.add('active');
   }
 
   function checkPhoneOverlay() {
@@ -495,14 +507,10 @@
       try {
         if ('wakeLock' in navigator) {
           wakeLock = await navigator.wakeLock.request('screen');
-          wakeLock.addEventListener('release', () => {
-            console.log('Screen Wake Lock was released');
-          });
+          wakeLock.addEventListener('release', () => { console.log('Screen Wake Lock released.'); });
           console.log('Screen Wake Lock is active.');
         }
-      } catch (err) {
-        console.error(`${err.name}, ${err.message}`);
-      }
+      } catch (err) { console.error(`${err.name}, ${err.message}`); }
     } else {
       if (wakeLock !== null) {
         await wakeLock.release();
@@ -547,5 +555,3 @@
 </script>
 </body>
 </html>
-
-
