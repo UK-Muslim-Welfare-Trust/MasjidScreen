@@ -302,6 +302,7 @@
       <div class="info-row">
         <div id="sunrise-card" class="info-mini"><div>Sunrise</div><div id="sunrise-time" class="time">--:--</div></div>
         <div id="zawwal-card" class="info-mini"><div>Zawwal</div><div id="zawwal-time" class="time">--:--</div></div>
+        <div id="sunset-card" class="info-mini"><div>Sunset</div><div id="sunset-time" class="time">--:--</div></div>
       </div>
     </section>
   </div>
@@ -337,8 +338,10 @@
     list: document.getElementById('prayer-list'),
     sunriseTime: document.getElementById('sunrise-time'),
     zawwalTime: document.getElementById('zawwal-time'),
+    sunsetTime: document.getElementById('sunset-time'),
     sunriseCard: document.getElementById('sunrise-card'),
     zawwalCard: document.getElementById('zawwal-card'),
+    sunsetCard: document.getElementById('sunset-card'),
     logo: document.getElementById('logo-toggle'),
     phoneOverlay: document.getElementById('phone-overlay'),
     overlayClock: document.getElementById('overlay-clock'),
@@ -450,12 +453,19 @@
         return `<div class="prayer-item" id="${id}"><div class="prayer-name">${name}</div><div class="prayer-times"><div class="time-block jamaat-time"><div class="time-block-label">1st Jama'at</div><div class="time-block-time">${j1}</div></div><div class="time-block jamaat-time"><div class="time-block-label">2nd Jama'at</div><div class="time-block-time">${j2}</div></div></div></div>`;
       } else {
         const start = format12(prayerCalendar[name]);
-        const jamaat = name === 'Maghrib' ? start : format12(jamaatToday[name]);
+        let jamaat;
+        if (name === 'Maghrib') {
+            const maghribStartMinutes = hmToMinutes(prayerCalendar.Maghrib);
+            jamaat = format12(minutesToHM(maghribStartMinutes !== null ? maghribStartMinutes + 1 : null));
+        } else {
+            jamaat = format12(jamaatToday[name]);
+        }
         return `<div class="prayer-item" id="${id}"><div class="prayer-name">${name}</div><div class="prayer-times"><div class="time-block start-time"><div class="time-block-label">Start</div><div class="time-block-time">${start}</div></div><div class="time-block jamaat-time"><div class="time-block-label">Jama'at</div><div class="time-block-time">${jamaat}</div></div></div></div>`;
       }
     }).join('');
     ELS.sunriseTime.textContent = format12(prayerCalendar.Sunrise);
-    ELS.zawwalTime.textContent = format12(minutesToHM(hmToMinutes(prayerCalendar.Zuhr) - 10));
+    ELS.zawwalTime.textContent = format12(minutesToHM(hmToMinutes(prayerCalendar.Zuhr) - 15));
+    ELS.sunsetTime.textContent = format12(prayerCalendar.Maghrib);
     highlightActive();
   }
 
@@ -473,30 +483,30 @@
 
     let activePrayer = '';
 
-    if (fajrStart !== null && (nowMin >= ishaStart || nowMin < fajrStart)) {
-      activePrayer = 'Isha';
-    } else if (maghribStart !== null && ishaStart !== null && nowMin >= maghribStart && nowMin < ishaStart - 1) {
-      activePrayer = 'Maghrib';
-    } else if (asrStart !== null && maghribStart !== null && nowMin >= asrStart && nowMin < maghribStart - 15) {
-      activePrayer = 'Asr';
-    } else if (zuhrStart !== null && asrStart !== null && nowMin >= zuhrStart && nowMin < asrStart - 1) {
-      activePrayer = isFriday ? 'Jummah' : 'Zuhr';
-    } else if (fajrStart !== null && sunrise !== null && nowMin >= fajrStart && nowMin < sunrise) {
-      activePrayer = 'Fajr';
+    if (nowMin >= ishaStart || nowMin < fajrStart) {
+        activePrayer = 'Isha';
+    } else if (nowMin >= maghribStart && nowMin < ishaStart - 1) {
+        activePrayer = 'Maghrib';
+    } else if (nowMin >= asrStart && nowMin < maghribStart - 15) {
+        activePrayer = 'Asr';
+    } else if (nowMin >= zuhrStart && nowMin < asrStart - 1) {
+        activePrayer = isFriday ? 'Jummah' : 'Zuhr';
+    } else if (nowMin >= fajrStart && nowMin < sunrise) {
+        activePrayer = 'Fajr';
     }
 
-    if (activePrayer) {
-        document.getElementById(`item-${activePrayer.toLowerCase()}`)?.classList.add('active');
-    }
+    if (activePrayer) document.getElementById(`item-${activePrayer.toLowerCase()}`)?.classList.add('active');
     
     if (sunrise !== null && nowMin >= sunrise && nowMin < sunrise + 15) ELS.sunriseCard.classList.add('active');
-    if (zuhrStart !== null && nowMin >= zuhrStart - 10 && nowMin < zuhrStart) ELS.zawwalCard.classList.add('active');
+    if (zuhrStart !== null && nowMin >= zuhrStart - 15 && nowMin < zuhrStart) ELS.zawwalCard.classList.add('active');
+    if (maghribStart !== null && nowMin >= maghribStart - 15 && nowMin < maghribStart) ELS.sunsetCard.classList.add('active');
   }
 
   function checkPhoneOverlay() {
-    if (Object.keys(jamaatToday).length === 0) return;
+    if (Object.keys(jamaatToday).length === 0 || Object.keys(prayerCalendar).length === 0) return;
     const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
-    const jamaatTimes = [jamaatToday.Fajr, jamaatToday.Zuhr, jamaatToday.Asr, prayerCalendar.Maghrib, jamaatToday.Isha, jamaatToday.Jumma, jamaatToday.Jumma2]
+    const maghribJamaat = hmToMinutes(prayerCalendar.Maghrib) + 1;
+    const jamaatTimes = [jamaatToday.Fajr, jamaatToday.Zuhr, jamaatToday.Asr, minutesToHM(maghribJamaat), jamaatToday.Isha, jamaatToday.Jumma, jamaatToday.Jumma2]
         .map(hmToMinutes).filter(t => t !== null);
     const show = jamaatTimes.some(t => nowMin >= t - 1 && nowMin <= t + 5);
     ELS.phoneOverlay.classList.toggle('visible', show);
@@ -507,9 +517,9 @@
       try {
         if ('wakeLock' in navigator) {
           wakeLock = await navigator.wakeLock.request('screen');
-          wakeLock.addEventListener('release', () => { console.log('Screen Wake Lock released.'); });
+          wakeLock.addEventListener('release', () => { console.log('Screen Wake Lock was released.'); });
           console.log('Screen Wake Lock is active.');
-        }
+        } else { console.log('Wake Lock API not supported.'); }
       } catch (err) { console.error(`${err.name}, ${err.message}`); }
     } else {
       if (wakeLock !== null) {
@@ -520,11 +530,8 @@
   }
 
   function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(e => console.warn(e));
-    } else if (document.exitFullscreen) {
-        document.exitFullscreen();
-    }
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => console.warn(e));
+    else if (document.exitFullscreen) document.exitFullscreen();
   }
   
   document.addEventListener('DOMContentLoaded', () => {
@@ -555,3 +562,5 @@
 </script>
 </body>
 </html>
+
+
