@@ -158,53 +158,70 @@
     .right {
       display: grid;
       grid-template-rows: 1fr auto;
-      gap: 1vmin;
+      gap: 1.5vmin;
       min-height: 0;
     }
 
-    .prayer-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1vmin;
-      align-content: space-between;
-      height: 100%;
-      min-height: 0;
+    .prayer-list {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
     }
 
-    .prayer-card {
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 10px;
-      padding: 1.2vmin 1.5vmin;
+    .prayer-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      min-height: clamp(72px, 8vmin, 110px);
-      border: 1px solid rgba(255, 255, 255, 0.03);
-      position: relative;
-      overflow: visible;
-      transition: all 0.3s ease;
+      padding: 1.2vmin 2.5vmin;
+      border-radius: 1vmin;
+      border-left: 5px solid transparent;
+      transition: all 0.3s ease-in-out;
     }
 
-    .prayer-left { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
-    .prayer-name { font-family: 'Teko', sans-serif; font-size: clamp(1.2rem, 2.8vh, 2.4rem); color: var(--primary-color); line-height: 1; }
-    .start-time { color: var(--text-secondary-color); font-size: clamp(0.8rem, 1.7vh, 1.2rem); }
-
-    .prayer-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
-    .jamaat-time { color: var(--primary-color); font-weight: 700; font-size: clamp(1.1rem, 2.6vh, 2.2rem); }
-    .jummah-extra { color: var(--text-secondary-color); font-size: clamp(0.75rem, 1.6vh, 1rem); margin-top: 0.4vmin; }
-
-    .prayer-card.active {
-      border-color: rgba(212, 175, 55, 0.30);
-      transform: translateY(-4px);
-      animation: breathe 3.6s ease-in-out infinite;
-    }
-    @keyframes breathe {
-      0% { box-shadow: 0 8px 30px rgba(212, 175, 55, 0.06); background: rgba(212, 175, 55, 0.02); }
-      50% { box-shadow: 0 30px 70px rgba(212, 175, 55, 0.10); background: rgba(212, 175, 55, 0.035); }
-      100% { box-shadow: 0 8px 30px rgba(212, 175, 55, 0.06); background: rgba(212, 175, 55, 0.02); }
+    .prayer-name {
+      font-family: 'Teko', sans-serif;
+      font-size: clamp(1.4rem, 6vmin, 3rem);
+      font-weight: 600;
+      flex-basis: 40%;
     }
 
-    .info-row { display: flex; gap: 1vmin; justify-content: center; align-items: center; margin-top: 6px; }
+    .prayer-times {
+      display: flex;
+      justify-content: space-around;
+      flex-basis: 60%;
+      text-align: center;
+    }
+
+    .time-block-label {
+      font-size: clamp(0.8rem, 2.4vmin, 1.2rem);
+      color: var(--text-secondary-color);
+    }
+
+    .time-block-time {
+      font-family: 'Teko', sans-serif;
+      font-size: clamp(1.8rem, 7vmin, 3.5rem);
+      line-height: 1.1;
+      font-weight: 600;
+    }
+
+    .prayer-item.active {
+      background: linear-gradient(90deg, rgba(191,148,86,0.15), transparent);
+      border-left-color: var(--highlight-color);
+    }
+
+    .prayer-item.active .prayer-name,
+    .prayer-item.active .time-block-time {
+      color: var(--primary-color);
+    }
+    
+    .info-row {
+      display: flex;
+      gap: 1.5vmin;
+      justify-content: center;
+      align-items: center;
+      margin-top: 6px;
+    }
     .info-mini {
       background: rgba(255, 255, 255, 0.02);
       border-radius: 10px;
@@ -216,8 +233,21 @@
       border: 1px solid rgba(255, 255, 255, 0.02);
       transition: all 0.3s ease;
     }
-    .info-mini .time { font-family: 'Teko', sans-serif; font-weight: 600; color: var(--primary-color); font-size: clamp(1rem, 2.2vh, 1.6rem); }
-    .info-mini.active { color: var(--primary-color); animation: breathe 3.6s ease-in-out infinite; }
+    .info-mini .time {
+      font-family: 'Teko', sans-serif;
+      font-weight: 600;
+      color: var(--primary-color);
+      font-size: clamp(1rem, 2.2vh, 1.6rem);
+    }
+    .info-mini.active {
+      color: var(--primary-color);
+      animation: breathe-info 3.6s ease-in-out infinite;
+    }
+    @keyframes breathe-info {
+      0% { box-shadow: 0 4px 15px rgba(212, 175, 55, 0.05); }
+      50% { box-shadow: 0 12px 30px rgba(212, 175, 55, 0.1); }
+      100% { box-shadow: 0 4px 15px rgba(212, 175, 55, 0.05); }
+    }
     
     .phone-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex;
@@ -233,7 +263,6 @@
       .wrap { grid-template-columns: 1fr; grid-auto-rows: auto 1fr; }
       .left { grid-template-rows: auto 1fr auto auto auto; padding: 2vmin; }
       .right { grid-template-rows: 1fr auto; }
-      .prayer-grid { grid-template-columns: 1fr; align-content: start; }
     }
   </style>
 </head>
@@ -264,7 +293,7 @@
     </section>
 
     <section class="panel right" aria-label="Prayer Timetable">
-      <div id="prayer-grid" class="prayer-grid" role="list"></div>
+      <div id="prayer-list" class="prayer-list" role="list"></div>
       <div class="info-row">
         <div id="sunrise-card" class="info-mini"><div>Sunrise</div><div id="sunrise-time" class="time">--:--</div></div>
         <div id="zawwal-card" class="info-mini"><div>Zawwal</div><div id="zawwal-time" class="time">--:--</div></div>
@@ -300,7 +329,7 @@
     hijri: document.getElementById('hijri'),
     messageViewport: document.getElementById('message-viewport'),
     messageContent: document.getElementById('message-content'),
-    grid: document.getElementById('prayer-grid'),
+    list: document.getElementById('prayer-list'),
     sunriseTime: document.getElementById('sunrise-time'),
     zawwalTime: document.getElementById('zawwal-time'),
     sunriseCard: document.getElementById('sunrise-card'),
@@ -332,16 +361,12 @@
   const hmToMinutes = hm => hm && hm.includes(':') ? hm.split(':').map(Number).reduce((h, m) => h * 60 + m) : null;
   const minutesToHM = m => m === null || isNaN(m) ? null : `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`;
   
-  // --- OFFLINE CACHING ---
   function saveCache() {
       try {
           localStorage.setItem('masjid_prayerCalendar', JSON.stringify(prayerCalendar));
           localStorage.setItem('masjid_jamaatToday', JSON.stringify(jamaatToday));
           localStorage.setItem('masjid_messageText', messageText);
-          console.log('Data cached for offline use.');
-      } catch (e) {
-          console.warn('Failed to save data to cache', e);
-      }
+      } catch (e) { console.warn('Failed to save cache', e); }
   }
 
   function loadCache() {
@@ -352,12 +377,8 @@
           if(calendar) prayerCalendar = JSON.parse(calendar);
           if(jamaat) jamaatToday = JSON.parse(jamaat);
           if(message) messageText = message;
-          console.log('Loaded data from cache.');
           return true;
-      } catch (e) {
-          console.warn('Failed to load data from cache', e);
-          return false;
-      }
+      } catch (e) { return false; }
   }
 
   function updateClock() {
@@ -373,15 +394,15 @@
       if (!res.ok) return;
       const json = await res.json();
       if (json?.data?.hijri) ELS.hijri.textContent = `${json.data.hijri.day} ${json.data.hijri.month.en} ${json.data.hijri.year}H`;
-    } catch (e) { console.warn('Hijri fetch failed, will use cache if available.', e); }
+    } catch (e) { console.warn('Hijri fetch failed', e); }
   }
 
   function setupListeners() {
     const path = `artifacts/masjid-connect-app/public/data`;
     const d = new Date(), day = pad(d.getDate()), month = pad(d.getMonth() + 1);
     
-    onSnapshot(doc(db, `${path}/prayerTimes/today`), s => { if(s.exists()) { jamaatToday = s.data(); saveCache(); renderPrayerGrid(); } });
-    onSnapshot(doc(db, `${path}/prayerCalendar/${day}-${month}`), s => { if(s.exists()) { prayerCalendar = s.data(); saveCache(); renderPrayerGrid(); } });
+    onSnapshot(doc(db, `${path}/prayerTimes/today`), s => { if(s.exists()) { jamaatToday = s.data(); saveCache(); renderPrayerList(); } });
+    onSnapshot(doc(db, `${path}/prayerCalendar/${day}-${month}`), s => { if(s.exists()) { prayerCalendar = s.data(); saveCache(); renderPrayerList(); } });
     onSnapshot(doc(db, `${path}/message/message`), s => {
       messageText = (s.exists() && s.data().text && String(s.data().text).trim()) ? String(s.data().text).trim() : '';
       saveCache();
@@ -394,10 +415,7 @@
     const { messageViewport, messageContent } = ELS;
     if (!messageViewport || !messageContent) return;
     const oldScroller = messageViewport.querySelector('.message-scroller');
-    if (oldScroller) {
-        messageViewport.innerHTML = '';
-        messageViewport.appendChild(messageContent);
-    }
+    if (oldScroller) { messageViewport.innerHTML = ''; messageViewport.appendChild(messageContent); }
     messageContent.style.animation = '';
     messageContent.textContent = txt;
     requestAnimationFrame(() => {
@@ -417,16 +435,17 @@
     });
   }
 
-  function renderPrayerGrid() {
-    if (!ELS.grid || Object.keys(prayerCalendar).length === 0) return;
-    ELS.grid.innerHTML = ['Fajr', 'Zuhr', 'Asr', 'Maghrib', 'Isha', 'Jummah'].map(name => {
-      const start = format12(prayerCalendar[name]);
+  function renderPrayerList() {
+    if (!ELS.list || Object.keys(prayerCalendar).length === 0) return;
+    ELS.list.innerHTML = ['Fajr', 'Zuhr', 'Asr', 'Maghrib', 'Isha', 'Jummah'].map(name => {
+      const id = `item-${name.toLowerCase()}`;
       if (name === 'Jummah') {
         const j1 = format12(jamaatToday.Jumma), j2 = format12(jamaatToday.Jumma2);
-        return `<div class="prayer-card"><div class="prayer-left"><div class="prayer-name">Jummah</div></div><div class="prayer-right"><div class="jamaat-time">${j1}</div><div class="jummah-extra">2nd at ${j2}</div></div></div>`;
+        return `<div class="prayer-item" id="${id}"><div class="prayer-name">${name}</div><div class="prayer-times"><div class="time-block"><div class="time-block-label">1st Jama'at</div><div class="time-block-time">${j1}</div></div><div class="time-block"><div class="time-block-label">2nd Jama'at</div><div class="time-block-time">${j2}</div></div></div></div>`;
       } else {
+        const start = format12(prayerCalendar[name]);
         const jamaat = name === 'Maghrib' ? start : format12(jamaatToday[name]);
-        return `<div class="prayer-card"><div class="prayer-left"><div class="prayer-name">${name}</div><div class="start-time">Start: ${start}</div></div><div class="prayer-right"><div class="jamaat-time">${jamaat}</div></div></div>`;
+        return `<div class="prayer-item" id="${id}"><div class="prayer-name">${name}</div><div class="prayer-times"><div class="time-block"><div class="time-block-label">Start</div><div class="time-block-time">${start}</div></div><div class="time-block"><div class="time-block-label">Jama'at</div><div class="time-block-time">${jamaat}</div></div></div></div>`;
       }
     }).join('');
     ELS.sunriseTime.textContent = format12(prayerCalendar.Sunrise);
@@ -435,7 +454,7 @@
   }
 
   function highlightActive() {
-    document.querySelectorAll('.prayer-card, .info-mini').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.prayer-item.active, .info-mini.active').forEach(el => el.classList.remove('active'));
     if (Object.keys(prayerCalendar).length === 0) return;
     const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes(), isFriday = now.getDay() === 5;
     const order = isFriday ? ['Fajr', 'Jummah', 'Asr', 'Maghrib', 'Isha'] : ['Fajr', 'Zuhr', 'Asr', 'Maghrib', 'Isha'];
@@ -446,9 +465,11 @@
         if (nowMin >= times[times.length - 1].start || nowMin < times[0].start) currentPrayer = times[times.length - 1].name;
         else for(let i = 0; i < times.length - 1; i++) if (nowMin >= times[i].start && nowMin < times[i+1].start) { currentPrayer = times[i].name; break; }
     }
-    if (currentPrayer) Array.from(ELS.grid.children).find(card => card.querySelector('.prayer-name')?.textContent === currentPrayer)?.classList.add('active');
+    if (currentPrayer) document.getElementById(`item-${currentPrayer.toLowerCase()}`)?.classList.add('active');
+    
     const sMin = hmToMinutes(prayerCalendar.Sunrise);
     if (sMin !== null && nowMin >= sMin && nowMin < sMin + 15) ELS.sunriseCard.classList.add('active');
+
     const zMin = hmToMinutes(prayerCalendar.Zuhr);
     if (zMin !== null && nowMin >= zMin - 10 && nowMin < zMin) ELS.zawwalCard.classList.add('active');
   }
@@ -470,12 +491,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     ELS.gregorian.textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     
-    // --- LOAD CACHE FIRST ---
-    if(loadCache()) {
-        renderPrayerGrid();
-        renderMessage();
-    }
-
+    if(loadCache()) { renderPrayerList(); renderMessage(); }
     fetchHijriDate();
     setupListeners();
     ELS.logo.addEventListener('click', toggleFullscreen);
