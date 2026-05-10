@@ -145,9 +145,6 @@ export default function App() {
 
           <div className="shrink-0 w-full mt-auto flex flex-col gap-[2vmin]">
             <MessageMarquee text={messageText} />
-            <div className="text-zinc-500 fluid-text-sm text-center pt-2 border-t border-white/5">
-              Please donate generously to support your Masjid.
-            </div>
           </div>
         </section>
 
