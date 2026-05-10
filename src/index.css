@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;600&family=Outfit:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-[#05140b] text-white font-sans overflow-hidden select-none;
+  }
+}
+
+@layer utilities {
+  .fluid-text-xs { font-size: clamp(0.75rem, 1.5vmin, 1.25rem); }
+  .fluid-text-sm { font-size: clamp(1rem, 2.5vmin, 1.75rem); }
+  .fluid-text-base { font-size: clamp(1.25rem, 3.5vmin, 2.25rem); }
+  .fluid-text-lg { font-size: clamp(1.8rem, 5vmin, 3.5rem); }
+  .fluid-text-xl { font-size: clamp(2.5rem, 7vmin, 5rem); }
+  .fluid-text-2xl { font-size: clamp(3rem, 10vmin, 7rem); }
+  .fluid-text-giant { font-size: clamp(5rem, 21vmin, 18rem); }
+
+  .font-teko {
+    font-family: 'Teko', sans-serif;
+  }
+  .font-sans {
+    font-family: 'Outfit', sans-serif;
+  }
+  .font-serif {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@keyframes breathe-gold {
+  0% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 0 15px rgba(212, 175, 55, 0.05); border-color: rgba(212, 175, 55, 0.3); }
+  50% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 0 45px rgba(212, 175, 55, 0.3); border-color: rgba(212, 175, 55, 0.8); }
+  100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 0 15px rgba(212, 175, 55, 0.05); border-color: rgba(212, 175, 55, 0.3); }
+}
+
+.animate-breathe {
+  animation: breathe-gold 3s ease-in-out infinite;
+}
+
+@keyframes marquee-y {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+.animate-marquee-y {
+  animation: marquee-y 30s linear infinite;
+}
+
